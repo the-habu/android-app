@@ -18,10 +18,10 @@
         android:src="@drawable/titel"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0"
+        app:layout_constraintVertical_bias="1.0"
         tools:src="@drawable/titel" />
 
     <Button
@@ -29,13 +29,28 @@
         android:layout_width="258dp"
         android:layout_height="74dp"
         android:layout_marginStart="8dp"
-        android:layout_marginBottom="23dp"
+        android:layout_marginBottom="8dp"
         android:contentDescription="@android:string/search_go"
         android:text="Los gehts"
+        android:textColor="@android:color/white"
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/imageView2"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.899" />
+
+    <EditText
+        android:id="@+id/userName"
+        android:layout_width="251dp"
+        android:layout_height="43dp"
+        android:layout_marginBottom="8dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="Name"
+        android:textColor="@android:color/white"
+        app:layout_constraintBottom_toTopOf="@+id/LosBtn"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </android.support.constraint.ConstraintLayout>
