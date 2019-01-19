@@ -82,7 +82,7 @@ public class BluetoothLeService extends Service {
     public final static UUID UUID_CHARACTERISTIC_LATENCY_UUID =     UUID.fromString(SampleGattAttributes.CHARACTERISTIC_LATENCY_UUID);
 
     final String csvDir = (Environment.getExternalStorageDirectory().getAbsolutePath() + "/Android/data/com.laserTag.de/Logging"); // Here csv file name is MyCsvFile.csv
-    final String csvFileName = "MyCsvFile.csv"; // Here csv file name is MyCsvFile.csv
+    final String csvFileName = "latencyLog.csv";
 
 
     //https://stackoverflow.com/questions/140131/convert-a-string-representation-of-a-hex-dump-to-a-byte-array-using-java
@@ -191,10 +191,11 @@ public class BluetoothLeService extends Service {
         CSVWriter writer = null;
         try {
 			File file = new File(csvDir);
-			file.mkdir();
-            file = new File(csvDir+ File.separator + csvFileName);
-			file.createNewFile();
-            writer = new CSVWriter(new FileWriter(file,true));
+            file.mkdir();
+
+            File csvfile = new File(csvDir+ File.separator + csvFileName);
+            csvfile.createNewFile();
+            writer = new CSVWriter(new FileWriter(csvfile,true));
             Date d = new Date();
             List<String[]> data = new ArrayList<String[]>();
             String timeStamp = new SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime());
