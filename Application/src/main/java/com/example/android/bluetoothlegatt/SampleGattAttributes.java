@@ -23,20 +23,19 @@ import java.util.HashMap;
  */
 public class SampleGattAttributes {
     private static HashMap<String, String> attributes = new HashMap();
-    public static String HEART_RATE_MEASUREMENT = "00002a37-0000-1000-8000-00805f9b34fb";
     public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
-    public static String TaggerTrigger = "756ad6a4-2007-4dc4-9173-72dc7d6b2627";
+    public static String CHARACTERISTIC_TRIGGER_UUID = "756ad6a4-2007-4dc4-9173-72dc7d6b2627";
+    public static String CHARACTERISTIC_IR_RECEIVE_UUID   = "a95980fb-4f18-4b2e-a258-81bf77575117";
+    public static String CHARACTERISTIC_IR_SEND_UUID      = "8b91a0d2-5f7f-49cb-8939-4455d3d24b81";
+    public static String CHARACTERISTIC_LATENCY_UUID      = "60e44cef-5a43-407b-8d1a-bce02377dcfd";
     public static String TaggerService = "08dbb28a-ce2c-467a-9f12-4f15d574a220";
 
     static {
-        // Sample Services.
-        attributes.put(TaggerTrigger, "Trigger");
         attributes.put(TaggerService, "Tagger");
-
-        attributes.put("0000180a-0000-1000-8000-00805f9b34fb", "Device Information Service");
-        // Sample Characteristics.
-        attributes.put(HEART_RATE_MEASUREMENT, "Heart Rate Measurement");
-        attributes.put("00002a29-0000-1000-8000-00805f9b34fb", "Manufacturer Name String");
+        attributes.put(CHARACTERISTIC_TRIGGER_UUID, "Trigger");
+        attributes.put(CHARACTERISTIC_IR_RECEIVE_UUID, "IR_RECEIVE");
+        attributes.put(CHARACTERISTIC_IR_SEND_UUID, "IR_SEND");
+        attributes.put(CHARACTERISTIC_LATENCY_UUID, "LATENCY");
     }
 
     public static String lookup(String uuid, String defaultName) {

@@ -29,10 +29,20 @@ import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
-import android.widget.Toast;
 
+import com.opencsv.CSVWriter;
+
+import java.io.Console;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -66,10 +76,14 @@ public class BluetoothLeService extends Service {
 
     public final static byte[] SHOOTCOMMAND = hexStringToByteArray("A1F1020102");
 
-    public final static UUID UUID_HEART_RATE_MEASUREMENT =
-            UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
-    public final static UUID UUID_TaggerTrigger =
-            UUID.fromString(SampleGattAttributes.TaggerTrigger);
+    public final static UUID UUID_TaggerTrigger =                   UUID.fromString(SampleGattAttributes.CHARACTERISTIC_TRIGGER_UUID);
+    public final static UUID UUID_CHARACTERISTIC_IR_RECEIVE_UUID =  UUID.fromString(SampleGattAttributes.CHARACTERISTIC_IR_RECEIVE_UUID);
+    public final static UUID UUID_CHARACTERISTIC_IR_SEND_UUID =     UUID.fromString(SampleGattAttributes.CHARACTERISTIC_IR_SEND_UUID);
+    public final static UUID UUID_CHARACTERISTIC_LATENCY_UUID =     UUID.fromString(SampleGattAttributes.CHARACTERISTIC_LATENCY_UUID);
+
+    final String csvDir = (Environment.getExternalStorageDirectory().getAbsolutePath() + "/Android/data/com.laserTag.de/Logging"); // Here csv file name is MyCsvFile.csv
+    final String csvFileName = "MyCsvFile.csv"; // Here csv file name is MyCsvFile.csv
+
 
     //https://stackoverflow.com/questions/140131/convert-a-string-representation-of-a-hex-dump-to-a-byte-array-using-java
     public static byte[] hexStringToByteArray(String s) {
@@ -81,6 +95,7 @@ public class BluetoothLeService extends Service {
         }
         return data;
     }
+
     // Implements callback methods for GATT events that the app cares about.  For example,
     // connection change and services discovered.
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
@@ -139,36 +154,20 @@ public class BluetoothLeService extends Service {
     private void broadcastUpdate(final String action,
                                  final BluetoothGattCharacteristic characteristic) {
         final Intent intent = new Intent(action);
-
-        // This is special handling for the Heart Rate Measurement profile.  Data parsing is
-        // carried out as per profile specifications:
+        System.out.println("broadcastUpdate");
         // http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.heart_rate_measurement.xml
-        if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
-            int flag = characteristic.getProperties();
-            int format = -1;
-            if ((flag & 0x01) != 0) {
-                format = BluetoothGattCharacteristic.FORMAT_UINT16;
-                Log.d(TAG, "Heart rate format UINT16.");
-            } else {
-                format = BluetoothGattCharacteristic.FORMAT_UINT8;
-                Log.d(TAG, "Heart rate format UINT8.");
-            }
-            final int heartRate = characteristic.getIntValue(format, 1);
-            Log.d(TAG, String.format("Received heart rate: %d", heartRate));
-            intent.putExtra(EXTRA_DATA, String.valueOf(heartRate));
-        }
-        else if(UUID_TaggerTrigger.equals(characteristic.getUuid()))
+        if(UUID_TaggerTrigger.equals(characteristic.getUuid()))
         {
-            characteristic.setValue(SHOOTCOMMAND);
-            mBluetoothGatt.writeCharacteristic(characteristic);
-
-            final byte[] data = characteristic.getValue();
-            if (data != null && data.length > 0) {
-                final StringBuilder stringBuilder = new StringBuilder(data.length);
-                for(byte byteChar : data)
-                    stringBuilder.append(String.format("%02X ", byteChar));
-                intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
-            }
+            Shoot(intent, characteristic);
+        }
+        else if(UUID_CHARACTERISTIC_IR_RECEIVE_UUID.equals(characteristic.getUuid())) {
+            RecieveInformation(intent, characteristic);
+        }
+        else if(UUID_CHARACTERISTIC_IR_SEND_UUID.equals(characteristic.getUuid())) {
+            System.out.println("UUID_CHARACTERISTIC_IR_SEND_UUID shoudnt get called");
+        }
+        else if(UUID_CHARACTERISTIC_LATENCY_UUID.equals(characteristic.getUuid())) {
+            WriteLog(intent, characteristic);
         }
         else {
             // For all other profiles, writes the data formatted in HEX.
@@ -181,6 +180,43 @@ public class BluetoothLeService extends Service {
             }
         }
         sendBroadcast(intent);
+    }
+    int FromByteArray(byte[] bytes) {
+        return bytes[3] << 24 | (bytes[2] & 0xFF) << 16 | (bytes[1] & 0xFF) << 8 | (bytes[0] & 0xFF);
+    }
+
+    private void WriteLog(Intent intent, BluetoothGattCharacteristic characteristic) {
+        //https://stackoverflow.com/questions/11341931/how-to-create-a-csv-on-android
+        System.out.println("WriteLog");
+        CSVWriter writer = null;
+        try {
+			File file = new File(csvDir);
+			file.mkdir();
+            file = new File(csvDir+ File.separator + csvFileName);
+			file.createNewFile();
+            writer = new CSVWriter(new FileWriter(file,true));
+            Date d = new Date();
+            List<String[]> data = new ArrayList<String[]>();
+            String timeStamp = new SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime());
+            System.out.println("WriteLog at" + csvDir +" with "+ FromByteArray(characteristic.getValue()));
+            data.add(new String[]{ timeStamp, ""+ FromByteArray(characteristic.getValue())});
+            writer.writeAll(data); // data is adding to csv
+            writer.close();
+            //callRead();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    private void RecieveInformation(Intent intent, BluetoothGattCharacteristic characteristic) {
+        //TODO: COde Here You got shot
+    }
+
+    void Shoot(Intent intent, BluetoothGattCharacteristic characteristic){
+        //send Shoot to tagger
+        characteristic.setValue(SHOOTCOMMAND);
+        mBluetoothGatt.writeCharacteristic(characteristic);
+        //show values
+        WriteLog(intent, characteristic);
     }
 
     public class LocalBinder extends Binder {
@@ -327,16 +363,16 @@ public class BluetoothLeService extends Service {
         }
         mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
 
-        // This is specific to Heart Rate Measurement.
-        if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
+        //TaggerApp Notification 756ad6a4-2007-4dc4-9173-72dc7d6b2627
+        if(UUID_TaggerTrigger.equals(characteristic.getUuid())) {
+            //Toast.makeText(getApplicationContext(), "Trigger Notification",Toast.LENGTH_SHORT);
             BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
                     UUID.fromString(SampleGattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
             descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
             mBluetoothGatt.writeDescriptor(descriptor);
         }
-
-        //TaggerApp Notification 756ad6a4-2007-4dc4-9173-72dc7d6b2627
-        if(UUID_TaggerTrigger.equals(characteristic.getUuid())) {
+        
+        if(UUID_CHARACTERISTIC_IR_RECEIVE_UUID.equals(characteristic.getUuid())) {
             //Toast.makeText(getApplicationContext(), "Trigger Notification",Toast.LENGTH_SHORT);
             BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
                     UUID.fromString(SampleGattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
