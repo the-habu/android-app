@@ -1,34 +1,17 @@
 {
     "logs": [
         {
-            "outputFile": "F:\\Dokumente\\Android\\android-BluetoothLeGatt-master\\android-BluetoothLeGatt-master\\Application\\build\\intermediates\\incremental\\mergeDebugResources\\merged.dir\\values-sw600dp-v13\\values-sw600dp-v13.xml",
+            "outputFile": "C:\\Users\\hahnc\\Documents\\workspace\\master4\\EMA\\android-app\\Application\\build\\intermediates\\incremental\\mergeDebugResources\\merged.dir\\values-sw600dp-v13\\values-sw600dp-v13.xml",
             "map": [
                 {
-                    "source": "F:\\Dokumente\\Android\\android-BluetoothLeGatt-master\\android-BluetoothLeGatt-master\\Application\\src\\main\\res\\values-sw600dp\\template-dimens.xml",
-                    "from": {
-                        "startLines": "20,21",
-                        "startColumns": "4,4",
-                        "startOffsets": "656,724",
-                        "endColumns": "67,67",
-                        "endOffsets": "719,787"
-                    },
-                    "to": {
-                        "startLines": "2,3",
-                        "startColumns": "4,4",
-                        "startOffsets": "55,123",
-                        "endColumns": "67,67",
-                        "endOffsets": "118,186"
-                    }
-                },
-                {
-                    "source": "F:\\Dokumente\\Android\\android-BluetoothLeGatt-master\\android-BluetoothLeGatt-master\\Application\\src\\main\\res\\values-sw600dp\\template-styles.xml",
+                    "source": "C:\\Users\\hahnc\\Documents\\workspace\\master4\\EMA\\android-app\\Application\\src\\main\\res\\values-sw600dp\\template-styles.xml",
                     "from": {
                         "startLines": "18",
                         "startColumns": "4",
-                        "startOffsets": "621",
+                        "startOffsets": "639",
                         "endLines": "22",
                         "endColumns": "12",
-                        "endOffsets": "861"
+                        "endOffsets": "883"
                     },
                     "to": {
                         "startLines": "4",
@@ -37,6 +20,23 @@
                         "endLines": "8",
                         "endColumns": "12",
                         "endOffsets": "431"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\hahnc\\Documents\\workspace\\master4\\EMA\\android-app\\Application\\src\\main\\res\\values-sw600dp\\template-dimens.xml",
+                    "from": {
+                        "startLines": "20,21",
+                        "startColumns": "4,4",
+                        "startOffsets": "676,745",
+                        "endColumns": "67,67",
+                        "endOffsets": "739,808"
+                    },
+                    "to": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,123",
+                        "endColumns": "67,67",
+                        "endOffsets": "118,186"
                     }
                 }
             ]

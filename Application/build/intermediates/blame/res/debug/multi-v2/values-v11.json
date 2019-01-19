@@ -1,16 +1,16 @@
 {
     "logs": [
         {
-            "outputFile": "F:\\Dokumente\\Android\\android-BluetoothLeGatt-master\\android-BluetoothLeGatt-master\\Application\\build\\intermediates\\incremental\\mergeDebugResources\\merged.dir\\values-v11\\values-v11.xml",
+            "outputFile": "C:\\Users\\hahnc\\Documents\\workspace\\master4\\EMA\\android-app\\Application\\build\\intermediates\\incremental\\mergeDebugResources\\merged.dir\\values-v11\\values-v11.xml",
             "map": [
                 {
-                    "source": "F:\\Dokumente\\Android\\android-BluetoothLeGatt-master\\android-BluetoothLeGatt-master\\Application\\src\\main\\res\\values-v11\\template-styles.xml",
+                    "source": "C:\\Users\\hahnc\\Documents\\workspace\\master4\\EMA\\android-app\\Application\\src\\main\\res\\values-v11\\template-styles.xml",
                     "from": {
                         "startLines": "19",
                         "startColumns": "4",
-                        "startOffsets": "650",
+                        "startOffsets": "669",
                         "endColumns": "65",
-                        "endOffsets": "711"
+                        "endOffsets": "730"
                     },
                     "to": {
                         "startLines": "2",
