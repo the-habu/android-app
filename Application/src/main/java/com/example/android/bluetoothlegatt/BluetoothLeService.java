@@ -35,7 +35,6 @@ import android.util.Log;
 
 import com.opencsv.CSVWriter;
 
-import java.io.Console;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -73,13 +72,16 @@ public class BluetoothLeService extends Service {
             "com.example.bluetooth.le.ACTION_DATA_AVAILABLE";
     public final static String EXTRA_DATA =
             "com.example.bluetooth.le.EXTRA_DATA";
+    public final static String COMMAND =
+            "com.example.bluetooth.le.COMMAND";
 
     public final static byte[] SHOOTCOMMAND = hexStringToByteArray("A1F1020102");
 
-    public final static UUID UUID_TaggerTrigger =                   UUID.fromString(SampleGattAttributes.CHARACTERISTIC_TRIGGER_UUID);
+    public final static UUID UUID_CHARACTERISTIC_TaggerTrigger =    UUID.fromString(SampleGattAttributes.CHARACTERISTIC_TRIGGER_UUID);
     public final static UUID UUID_CHARACTERISTIC_IR_RECEIVE_UUID =  UUID.fromString(SampleGattAttributes.CHARACTERISTIC_IR_RECEIVE_UUID);
     public final static UUID UUID_CHARACTERISTIC_IR_SEND_UUID =     UUID.fromString(SampleGattAttributes.CHARACTERISTIC_IR_SEND_UUID);
     public final static UUID UUID_CHARACTERISTIC_LATENCY_UUID =     UUID.fromString(SampleGattAttributes.CHARACTERISTIC_LATENCY_UUID);
+    public final static UUID UUID_TAGGER_SERVICES =                 UUID.fromString(SampleGattAttributes.TaggerService);
 
     final String csvDir = (Environment.getExternalStorageDirectory().getAbsolutePath() + "/Android/data/com.laserTag.de/Logging"); // Here csv file name is MyCsvFile.csv
     final String csvFileName = "latencyLog.csv";
@@ -154,20 +156,32 @@ public class BluetoothLeService extends Service {
     private void broadcastUpdate(final String action,
                                  final BluetoothGattCharacteristic characteristic) {
         final Intent intent = new Intent(action);
-        System.out.println("broadcastUpdate");
+        System.out.println("broadcastUpdate:");
         // http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.heart_rate_measurement.xml
-        if(UUID_TaggerTrigger.equals(characteristic.getUuid()))
+        if(UUID_CHARACTERISTIC_TaggerTrigger.equals(characteristic.getUuid()))
         {
             Shoot(intent, characteristic);
+            System.out.println("TaggerTrigger");
+            intent.putExtra(COMMAND, "SHOOT");
         }
         else if(UUID_CHARACTERISTIC_IR_RECEIVE_UUID.equals(characteristic.getUuid())) {
             RecieveInformation(intent, characteristic);
+            System.out.println("IR_RECEIVE");
         }
         else if(UUID_CHARACTERISTIC_IR_SEND_UUID.equals(characteristic.getUuid())) {
             System.out.println("UUID_CHARACTERISTIC_IR_SEND_UUID shoudnt get called");
+            System.out.println("IR_SEND");
         }
         else if(UUID_CHARACTERISTIC_LATENCY_UUID.equals(characteristic.getUuid())) {
+            System.out.println("LATENCY");
             WriteLog(intent, characteristic);
+            final byte[] data = characteristic.getValue();
+            if (data != null && data.length > 0) {
+                final StringBuilder stringBuilder = new StringBuilder(data.length);
+                for(byte byteChar : data)
+                    stringBuilder.append(String.format("%02X ", byteChar));
+                intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
+            }
         }
         else {
             // For all other profiles, writes the data formatted in HEX.
@@ -191,7 +205,7 @@ public class BluetoothLeService extends Service {
         CSVWriter writer = null;
         try {
 			File file = new File(csvDir);
-            file.mkdir();
+            file.mkdirs();
 
             File csvfile = new File(csvDir+ File.separator + csvFileName);
             csvfile.createNewFile();
@@ -199,8 +213,8 @@ public class BluetoothLeService extends Service {
             Date d = new Date();
             List<String[]> data = new ArrayList<String[]>();
             String timeStamp = new SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime());
-            System.out.println("WriteLog at" + csvDir +" with "+ FromByteArray(characteristic.getValue()));
-            data.add(new String[]{ timeStamp, ""+ FromByteArray(characteristic.getValue())});
+            System.out.println("WriteLog at" + csvDir +" with "+ characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT32,0));
+            //data.add(new String[]{ timeStamp, ""+ FromByteArray(characteristic.getStringValue(0))});
             writer.writeAll(data); // data is adding to csv
             writer.close();
             //callRead();
@@ -215,9 +229,9 @@ public class BluetoothLeService extends Service {
     void Shoot(Intent intent, BluetoothGattCharacteristic characteristic){
         //send Shoot to tagger
         characteristic.setValue(SHOOTCOMMAND);
-        mBluetoothGatt.writeCharacteristic(characteristic);
+        //mBluetoothGatt.writeCharacteristic(characteristic);
         //show values
-        WriteLog(intent, characteristic);
+
     }
 
     public class LocalBinder extends Binder {
@@ -362,10 +376,11 @@ public class BluetoothLeService extends Service {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
+        Log.d(TAG,"setCharacteristicNotification");
         mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
 
         //TaggerApp Notification 756ad6a4-2007-4dc4-9173-72dc7d6b2627
-        if(UUID_TaggerTrigger.equals(characteristic.getUuid())) {
+        if(UUID_CHARACTERISTIC_TaggerTrigger.equals(characteristic.getUuid())) {
             //Toast.makeText(getApplicationContext(), "Trigger Notification",Toast.LENGTH_SHORT);
             BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
                     UUID.fromString(SampleGattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
