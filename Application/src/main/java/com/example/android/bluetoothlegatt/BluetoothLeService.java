@@ -134,14 +134,17 @@ public class BluetoothLeService extends Service {
         public void onCharacteristicRead(BluetoothGatt gatt,
                                          BluetoothGattCharacteristic characteristic,
                                          int status) {
+            Log.d(TAG, "onCharacteristicRead");
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
+
             }
         }
 
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
+            Log.d(TAG, "onCharacteristicChanged");
             broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
         }
 
@@ -160,13 +163,17 @@ public class BluetoothLeService extends Service {
         // http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.heart_rate_measurement.xml
         if(UUID_CHARACTERISTIC_TaggerTrigger.equals(characteristic.getUuid()))
         {
+            intent.putExtra(COMMAND, "SHOOT");
             Shoot(intent, characteristic);
             System.out.println("TaggerTrigger");
-            intent.putExtra(COMMAND, "SHOOT");
         }
         else if(UUID_CHARACTERISTIC_IR_RECEIVE_UUID.equals(characteristic.getUuid())) {
-            RecieveInformation(intent, characteristic);
-            System.out.println("IR_RECEIVE");
+            intent.putExtra(COMMAND, "REVCIEVE");
+            int val = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT16, 0 );
+            intent.putExtra(EXTRA_DATA, val);
+            Log.i(TAG, "RecievedInformation! : " + val);
+            //RecieveInformation(intent, characteristic);
+
         }
         else if(UUID_CHARACTERISTIC_IR_SEND_UUID.equals(characteristic.getUuid())) {
             System.out.println("UUID_CHARACTERISTIC_IR_SEND_UUID shoudnt get called");
@@ -174,6 +181,7 @@ public class BluetoothLeService extends Service {
         }
         else if(UUID_CHARACTERISTIC_LATENCY_UUID.equals(characteristic.getUuid())) {
             System.out.println("LATENCY");
+            intent.putExtra(COMMAND, "LATENCY");
             WriteLog(intent, characteristic);
             final byte[] data = characteristic.getValue();
             if (data != null && data.length > 0) {
@@ -223,7 +231,7 @@ public class BluetoothLeService extends Service {
         }
     }
     private void RecieveInformation(Intent intent, BluetoothGattCharacteristic characteristic) {
-        //TODO: COde Here You got shot
+
     }
 
     void Shoot(Intent intent, BluetoothGattCharacteristic characteristic){
@@ -364,6 +372,14 @@ public class BluetoothLeService extends Service {
         mBluetoothGatt.readCharacteristic(characteristic);
     }
 
+    public void writeCharacteristic(BluetoothGattCharacteristic characteristic){
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+        mBluetoothGatt.writeCharacteristic(characteristic);
+    }
+
     /**
      * Enables or disables notification on a give characteristic.
      *
@@ -377,21 +393,20 @@ public class BluetoothLeService extends Service {
             return;
         }
         Log.d(TAG,"setCharacteristicNotification");
+
         mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
 
         //TaggerApp Notification 756ad6a4-2007-4dc4-9173-72dc7d6b2627
         if(UUID_CHARACTERISTIC_TaggerTrigger.equals(characteristic.getUuid())) {
             //Toast.makeText(getApplicationContext(), "Trigger Notification",Toast.LENGTH_SHORT);
             BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
-                    UUID.fromString(SampleGattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
+                    UUID.fromString(SampleGattAttributes.CLIENT_DECRIPTOR_SHOOT_CONFIG));
             descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
             mBluetoothGatt.writeDescriptor(descriptor);
         }
         
         if(UUID_CHARACTERISTIC_IR_RECEIVE_UUID.equals(characteristic.getUuid())) {
-            //Toast.makeText(getApplicationContext(), "Trigger Notification",Toast.LENGTH_SHORT);
-            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
-                    UUID.fromString(SampleGattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
+            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(UUID.fromString(SampleGattAttributes.CLIENT_DECRIPTOR_SHOOT_CONFIG));
             descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
             mBluetoothGatt.writeDescriptor(descriptor);
         }
