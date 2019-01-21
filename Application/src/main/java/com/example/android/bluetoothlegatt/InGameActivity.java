@@ -9,18 +9,28 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.os.Environment;
 import android.os.IBinder;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
+import com.opencsv.CSVWriter;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import static android.bluetooth.BluetoothGattCharacteristic.PERMISSION_WRITE;
 import static android.bluetooth.BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT;
 
 public class InGameActivity extends Activity {
-    private final static String TAG = DeviceControlActivity.class.getSimpleName();
+    private final static String TAG = InGameActivity.class.getSimpleName();
 
 
     BluetoothLeService mBluetoothLeService;
@@ -34,6 +44,10 @@ public class InGameActivity extends Activity {
     BluetoothGattCharacteristic trigger;
     BluetoothGattCharacteristic irRead;
     BluetoothGattCharacteristic irWrite;
+
+    final String csvDir = (Environment.getExternalStorageDirectory().getAbsolutePath() + "/Android/data/com.laserTag.de/Logging"); // Here csv file name is MyCsvFile.csv
+    final String csvFileName = "latencyLog.csv";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,7 +115,8 @@ public class InGameActivity extends Activity {
                 mBluetoothLeService.writeCharacteristic(irWrite);
                 break;
             case "LATENCY":
-                ((TextView)findViewById(R.id.textViewLatency)).setText("test");
+                ((TextView)findViewById(R.id.textViewLatency)).setText(stringExtra);
+                WriteLog(intent, stringExtra);
                 break;
             default:
                 TextView view = findViewById(R.id.textViewLatency);
@@ -134,6 +149,30 @@ public class InGameActivity extends Activity {
                 }
 
             }
+        }
+    }
+
+    private void WriteLog(Intent intent, String val) {
+        //https://stackoverflow.com/questions/11341931/how-to-create-a-csv-on-android
+        System.out.println("WriteLog");
+        CSVWriter writer = null;
+        try {
+            File file = new File(csvDir);
+            file.mkdirs();
+
+            File csvfile = new File(csvDir+ File.separator + csvFileName);
+            csvfile.createNewFile();
+            writer = new CSVWriter(new FileWriter(csvfile,true));
+            Date d = new Date();
+            List<String[]> data = new ArrayList<String[]>();
+            String timeStamp = new SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime());
+            System.out.println("WriteLog at" + csvDir +" with "+ val);
+            data.add(new String[]{ timeStamp, val});
+            writer.writeAll(data); // data is adding to csv
+            writer.close();
+            //callRead();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

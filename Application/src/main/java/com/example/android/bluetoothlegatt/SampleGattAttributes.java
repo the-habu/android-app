@@ -23,8 +23,7 @@ import java.util.HashMap;
  */
 public class SampleGattAttributes {
     private static HashMap<String, String> attributes = new HashMap();
-    public static String CLIENT_DECRIPTOR_SHOOT_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
-    public static String CLIENT_DECRIPTOR_READ_CONFIG = "98bfde16-fcda-4c99-9311-68799c8a75e6";
+    public static String CLIENT_DECRIPTOR_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
 
     public static String CHARACTERISTIC_TRIGGER_UUID = "756ad6a4-2007-4dc4-9173-72dc7d6b2627";
     public static String CHARACTERISTIC_IR_RECEIVE_UUID   = "a95980fb-4f18-4b2e-a258-81bf77575117";

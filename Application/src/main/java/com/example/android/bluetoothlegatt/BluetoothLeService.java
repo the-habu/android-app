@@ -29,19 +29,9 @@ import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
-import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
 
-import com.opencsv.CSVWriter;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -83,8 +73,6 @@ public class BluetoothLeService extends Service {
     public final static UUID UUID_CHARACTERISTIC_LATENCY_UUID =     UUID.fromString(SampleGattAttributes.CHARACTERISTIC_LATENCY_UUID);
     public final static UUID UUID_TAGGER_SERVICES =                 UUID.fromString(SampleGattAttributes.TaggerService);
 
-    final String csvDir = (Environment.getExternalStorageDirectory().getAbsolutePath() + "/Android/data/com.laserTag.de/Logging"); // Here csv file name is MyCsvFile.csv
-    final String csvFileName = "latencyLog.csv";
 
 
     //https://stackoverflow.com/questions/140131/convert-a-string-representation-of-a-hex-dump-to-a-byte-array-using-java
@@ -112,7 +100,6 @@ public class BluetoothLeService extends Service {
                 // Attempts to discover services after successful connection.
                 Log.i(TAG, "Attempting to start service discovery:" +
                         mBluetoothGatt.discoverServices());
-
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 intentAction = ACTION_GATT_DISCONNECTED;
                 mConnectionState = STATE_DISCONNECTED;
@@ -159,87 +146,35 @@ public class BluetoothLeService extends Service {
     private void broadcastUpdate(final String action,
                                  final BluetoothGattCharacteristic characteristic) {
         final Intent intent = new Intent(action);
-        System.out.println("broadcastUpdate:");
+        Log.i(TAG,"broadcastUpdate:");
         // http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.heart_rate_measurement.xml
         if(UUID_CHARACTERISTIC_TaggerTrigger.equals(characteristic.getUuid()))
         {
             intent.putExtra(COMMAND, "SHOOT");
-            Shoot(intent, characteristic);
-            System.out.println("TaggerTrigger");
+            Log.i(TAG, "TaggerTrigger");
         }
         else if(UUID_CHARACTERISTIC_IR_RECEIVE_UUID.equals(characteristic.getUuid())) {
             intent.putExtra(COMMAND, "REVCIEVE");
-            int val = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT16, 0 );
+            int val = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0 );
             intent.putExtra(EXTRA_DATA, val);
             Log.i(TAG, "RecievedInformation! : " + val);
             //RecieveInformation(intent, characteristic);
 
         }
         else if(UUID_CHARACTERISTIC_IR_SEND_UUID.equals(characteristic.getUuid())) {
-            System.out.println("UUID_CHARACTERISTIC_IR_SEND_UUID shoudnt get called");
+            Log.e(TAG,"UUID_CHARACTERISTIC_IR_SEND_UUID shoudnt get called");
             System.out.println("IR_SEND");
         }
         else if(UUID_CHARACTERISTIC_LATENCY_UUID.equals(characteristic.getUuid())) {
-            System.out.println("LATENCY");
+            Log.i(TAG,"LATENCY");
             intent.putExtra(COMMAND, "LATENCY");
-            WriteLog(intent, characteristic);
-            final byte[] data = characteristic.getValue();
-            if (data != null && data.length > 0) {
-                final StringBuilder stringBuilder = new StringBuilder(data.length);
-                for(byte byteChar : data)
-                    stringBuilder.append(String.format("%02X ", byteChar));
-                intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
-            }
+            int val = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT32,0);
+            intent.putExtra(EXTRA_DATA, val);
         }
         else {
-            // For all other profiles, writes the data formatted in HEX.
-            final byte[] data = characteristic.getValue();
-            if (data != null && data.length > 0) {
-                final StringBuilder stringBuilder = new StringBuilder(data.length);
-                for(byte byteChar : data)
-                    stringBuilder.append(String.format("%02X ", byteChar));
-                intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
-            }
+            Log.e(TAG, "Characteristic not found");
         }
         sendBroadcast(intent);
-    }
-    int FromByteArray(byte[] bytes) {
-        return bytes[3] << 24 | (bytes[2] & 0xFF) << 16 | (bytes[1] & 0xFF) << 8 | (bytes[0] & 0xFF);
-    }
-
-    private void WriteLog(Intent intent, BluetoothGattCharacteristic characteristic) {
-        //https://stackoverflow.com/questions/11341931/how-to-create-a-csv-on-android
-        System.out.println("WriteLog");
-        CSVWriter writer = null;
-        try {
-			File file = new File(csvDir);
-            file.mkdirs();
-
-            File csvfile = new File(csvDir+ File.separator + csvFileName);
-            csvfile.createNewFile();
-            writer = new CSVWriter(new FileWriter(csvfile,true));
-            Date d = new Date();
-            List<String[]> data = new ArrayList<String[]>();
-            String timeStamp = new SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime());
-            System.out.println("WriteLog at" + csvDir +" with "+ characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT32,0));
-            //data.add(new String[]{ timeStamp, ""+ FromByteArray(characteristic.getStringValue(0))});
-            writer.writeAll(data); // data is adding to csv
-            writer.close();
-            //callRead();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    private void RecieveInformation(Intent intent, BluetoothGattCharacteristic characteristic) {
-
-    }
-
-    void Shoot(Intent intent, BluetoothGattCharacteristic characteristic){
-        //send Shoot to tagger
-        characteristic.setValue(SHOOTCOMMAND);
-        //mBluetoothGatt.writeCharacteristic(characteristic);
-        //show values
-
     }
 
     public class LocalBinder extends Binder {
@@ -392,24 +327,13 @@ public class BluetoothLeService extends Service {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
-        Log.d(TAG,"setCharacteristicNotification");
 
         mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
 
-        //TaggerApp Notification 756ad6a4-2007-4dc4-9173-72dc7d6b2627
-        if(UUID_CHARACTERISTIC_TaggerTrigger.equals(characteristic.getUuid())) {
-            //Toast.makeText(getApplicationContext(), "Trigger Notification",Toast.LENGTH_SHORT);
-            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
-                    UUID.fromString(SampleGattAttributes.CLIENT_DECRIPTOR_SHOOT_CONFIG));
-            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-            mBluetoothGatt.writeDescriptor(descriptor);
-        }
-        
-        if(UUID_CHARACTERISTIC_IR_RECEIVE_UUID.equals(characteristic.getUuid())) {
-            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(UUID.fromString(SampleGattAttributes.CLIENT_DECRIPTOR_SHOOT_CONFIG));
-            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-            mBluetoothGatt.writeDescriptor(descriptor);
-        }
+        BluetoothGattDescriptor descriptor = characteristic.getDescriptor(UUID.fromString(SampleGattAttributes.CLIENT_DECRIPTOR_CONFIG));
+        descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+        mBluetoothGatt.writeDescriptor(descriptor);
+
     }
 
     /**
