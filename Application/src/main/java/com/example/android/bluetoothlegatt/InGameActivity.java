@@ -42,7 +42,6 @@ public class InGameActivity extends Activity {
 
         final Intent intent = getIntent();
         mDeviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
-
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
 
@@ -108,13 +107,20 @@ public class InGameActivity extends Activity {
     private void TakeAction(Intent intent) {
         String stringExtra = intent.getStringExtra(BluetoothLeService.EXTRA_DATA);
         String command = intent.getStringExtra(BluetoothLeService.COMMAND);
+        Log.i(TAG, "Command was " + command +" with " + stringExtra);
 
-        if(command.equals("SHOOT")) {
-            irWrite.setValue(BluetoothLeService.SHOOTCOMMAND);
-        }
-        else {
-            TextView view = findViewById(R.id.textViewLatency);
-            view.setText(stringExtra);
+        switch (command) {
+            case "SHOOT":
+                irWrite.setValue(BluetoothLeService.SHOOTCOMMAND);
+                mBluetoothLeService.writeCharacteristic(irWrite);
+                break;
+            case "LATENCY":
+                ((TextView)findViewById(R.id.textViewLatency)).setText("test");
+                break;
+            default:
+                TextView view = findViewById(R.id.textViewLatency);
+                view.setText(stringExtra);
+                break;
         }
     }
 
@@ -131,10 +137,12 @@ public class InGameActivity extends Activity {
                         mBluetoothLeService.setCharacteristicNotification(characteristic, true);
                     }
 
-                    if(characteristic.getUuid() == BluetoothLeService.UUID_CHARACTERISTIC_IR_SEND_UUID) {
+                    if(characteristic.getUuid().toString().equals(SampleGattAttributes.CHARACTERISTIC_IR_SEND_UUID)) {
                         irWrite = characteristic;
 
-                        characteristic.setWriteType(WRITE_TYPE_DEFAULT);
+                        //characteristic.setWriteType(WRITE_TYPE_DEFAULT);
+                        irWrite.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+
                         //irWrite.setWriteType(PERMISSION_WRITE);
                     }
                 }
