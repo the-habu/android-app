@@ -58,6 +58,20 @@ public class InGameActivity extends Activity {
         mDeviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+
+        Intent socketIntent = new Intent();
+        ServiceConnection socketServiceConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+
+            }
+        };
+        bindService(socketIntent, socketServiceConnection, BIND_AUTO_CREATE);
     }
 
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
