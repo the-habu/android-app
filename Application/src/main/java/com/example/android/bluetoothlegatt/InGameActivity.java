@@ -95,8 +95,6 @@ public class InGameActivity extends Activity {
                 invalidateOptionsMenu();
                 //clearUI();
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
-                // Show all the supported services and characteristics on the user interface.
-                //displayGattServices(mBluetoothLeService.getSupportedGattServices());
                 InitCharactaristics(mBluetoothLeService.getSupportedGattServices());
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 TakeAction(intent);
@@ -140,11 +138,7 @@ public class InGameActivity extends Activity {
 
                     if(characteristic.getUuid().toString().equals(SampleGattAttributes.CHARACTERISTIC_IR_SEND_UUID)) {
                         irWrite = characteristic;
-
-                        //characteristic.setWriteType(WRITE_TYPE_DEFAULT);
                         irWrite.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
-
-                        //irWrite.setWriteType(PERMISSION_WRITE);
                     }
                 }
 

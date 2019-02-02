@@ -124,7 +124,6 @@ public class BluetoothLeService extends Service {
             Log.d(TAG, "onCharacteristicRead");
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
-
             }
         }
 
@@ -151,12 +150,12 @@ public class BluetoothLeService extends Service {
         if(UUID_CHARACTERISTIC_TaggerTrigger.equals(characteristic.getUuid()))
         {
             intent.putExtra(COMMAND, "SHOOT");
-            Log.i(TAG, "TaggerTrigger");
+            Log.i(TAG, "Trigger");
         }
         else if(UUID_CHARACTERISTIC_IR_RECEIVE_UUID.equals(characteristic.getUuid())) {
             intent.putExtra(COMMAND, "REVCIEVE");
             int val = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0 );
-            intent.putExtra(EXTRA_DATA, val);
+            intent.putExtra(EXTRA_DATA, String.valueOf(val));
             Log.i(TAG, "RecievedInformation! : " + val);
             //RecieveInformation(intent, characteristic);
 
@@ -169,7 +168,7 @@ public class BluetoothLeService extends Service {
             Log.i(TAG,"LATENCY");
             intent.putExtra(COMMAND, "LATENCY");
             int val = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT32,0);
-            intent.putExtra(EXTRA_DATA, val);
+            intent.putExtra(EXTRA_DATA, String.valueOf(val));
         }
         else {
             Log.e(TAG, "Characteristic not found");
