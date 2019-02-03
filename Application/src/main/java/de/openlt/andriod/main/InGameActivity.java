@@ -1,4 +1,4 @@
-package com.example.android.bluetoothlegatt;
+package de.openlt.andriod.main;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothGattCharacteristic;
@@ -15,6 +15,9 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
+import com.example.android.bluetoothlegatt.BluetoothLeService;
+import com.example.android.bluetoothlegatt.R;
+import com.example.android.bluetoothlegatt.SampleGattAttributes;
 import com.opencsv.CSVWriter;
 
 import java.io.File;
@@ -25,9 +28,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
-import static android.bluetooth.BluetoothGattCharacteristic.PERMISSION_WRITE;
-import static android.bluetooth.BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT;
+import de.openlt.andriod.Audio.SoundPoolPlayer;
 
 public class InGameActivity extends Activity {
     private final static String TAG = InGameActivity.class.getSimpleName();
@@ -35,10 +39,14 @@ public class InGameActivity extends Activity {
 
     BluetoothLeService mBluetoothLeService;
     public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
+    public static final float DeathTime = 5000;
 
     private String mDeviceAddress;
     private boolean mConnected = false;
-
+    private TextView mConnectionState;
+    private TextView mPlayerState;
+    private TextView mTimeActivationLeft;
+    private SoundPoolPlayer soundPlayer;
 
     BluetoothGattCharacteristic latency;
     BluetoothGattCharacteristic trigger;
@@ -48,11 +56,16 @@ public class InGameActivity extends Activity {
     final String csvDir = (Environment.getExternalStorageDirectory().getAbsolutePath() + "/Android/data/com.laserTag.de/Logging"); // Here csv file name is MyCsvFile.csv
     final String csvFileName = "latencyLog.csv";
 
-
+    private Boolean activePlayer;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_in_game);
+        soundPlayer = new SoundPoolPlayer(this);
+        mConnectionState = (TextView) findViewById(R.id.InGame_Connected_Val);
+        mPlayerState = (TextView) findViewById(R.id.InGame_Active_Val);
+        mTimeActivationLeft = (TextView) findViewById(R.id.TimeActivationLeft);
+        activePlayer = true;
 
         final Intent intent = getIntent();
         mDeviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
@@ -85,22 +98,35 @@ public class InGameActivity extends Activity {
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
 
+
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
                 mConnected = true;
-                //updateConnectionState(R.string.connected);
+                updateConnectionState(R.string.connected);
                 invalidateOptionsMenu();
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
                 mConnected = false;
-                //updateConnectionState(R.string.disconnected);
+                Log.d(TAG, "ACTION_GATT_DISCONNECTED");
+                updateConnectionState(R.string.disconnected);
                 invalidateOptionsMenu();
                 //clearUI();
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
+                Log.d(TAG, "ACTION_GATT_SERVICES_DISCOVERED");
                 InitCharactaristics(mBluetoothLeService.getSupportedGattServices());
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 TakeAction(intent);
             }
         }
     };
+
+    private void updateConnectionState(final int resourceId) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mConnectionState.setText(resourceId);
+            }
+        });
+    }
+
 
     private void TakeAction(Intent intent) {
         String stringExtra = intent.getStringExtra(BluetoothLeService.EXTRA_DATA);
@@ -109,19 +135,62 @@ public class InGameActivity extends Activity {
 
         switch (command) {
             case "SHOOT":
-                irWrite.setValue(BluetoothLeService.SHOOTCOMMAND);
-                mBluetoothLeService.writeCharacteristic(irWrite);
+                if(activePlayer) {
+                    irWrite.setValue(BluetoothLeService.SHOOTCOMMAND);
+                    mBluetoothLeService.writeCharacteristic(irWrite);
+                    soundPlayer.playShortResource(R.raw.laser_gun_shot_2);
+                }
                 break;
             case "LATENCY":
-                ((TextView)findViewById(R.id.textViewLatency)).setText(stringExtra);
+                ((TextView)findViewById(R.id.InGame_Latenz_Val)).setText(stringExtra);
                 WriteLog(intent, stringExtra);
                 break;
+            case "REVCIEVE":
+                GotHit(stringExtra);
             default:
-                TextView view = findViewById(R.id.textViewLatency);
-                view.setText(stringExtra);
+                Log.e(TAG, "unkown Command");
                 break;
         }
     }
+
+    void GotHit(String data){
+        if(data.equals("241")){
+            return;
+        }
+        mPlayerState.setText(R.string.DeactiveLabel);
+        activePlayer = false;
+        soundPlayer.playShortResource(R.raw.shield_hit_1);
+        final Timer t  = new Timer();
+        final int timeStep = 100;
+        TimerTask task = new TimerTask() {
+            float timer = 0;
+            @Override
+            public void run() {
+                if(timer >= DeathTime)
+                {
+                    activePlayer = true;
+                    SetTimerToUI("");
+                    t.cancel();
+                }else {
+                    timer += timeStep;
+                    SetTimerToUI("" + (DeathTime - timer) / 1000f);
+                }
+            }
+
+            void SetTimerToUI(final String time){
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mTimeActivationLeft.setText(time);
+                    }
+                });
+            }
+        };
+        t.scheduleAtFixedRate(task,0,timeStep);
+    }
+
+
+
 
     private void InitCharactaristics(List<BluetoothGattService> supportedGattServices) {
         for (BluetoothGattService blGattService: supportedGattServices) {
@@ -174,6 +243,7 @@ public class InGameActivity extends Activity {
     protected void onResume() {
         super.onResume();
         registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+        Log.d(TAG, "onResume");
         if (mBluetoothLeService != null) {
             final boolean result = mBluetoothLeService.connect(mDeviceAddress);
             Log.d(TAG, "Connect request result=" + result);
@@ -183,14 +253,17 @@ public class InGameActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        Log.d(TAG, "onPause");
         unregisterReceiver(mGattUpdateReceiver);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        Log.d(TAG, "onDestroy");
         unbindService(mServiceConnection);
         mBluetoothLeService = null;
+        soundPlayer.release();
     }
     private static IntentFilter makeGattUpdateIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();

@@ -26,7 +26,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,11 +38,15 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
+import de.openlt.andriod.main.InGameActivity;
+
 /**
  * Activity for scanning and displaying available Bluetooth LE devices.
  */
 public class DeviceScanActivity extends ListActivity {
     private final static String TAG = DeviceControlActivity.class.getSimpleName();
+
+    public final static String TaggerName = "OpenLT Tagger";
 
     private LeDeviceListAdapter mLeDeviceListAdapter;
     private BluetoothAdapter mBluetoothAdapter;
@@ -196,7 +199,7 @@ public class DeviceScanActivity extends ListActivity {
 
         public void addDevice(BluetoothDevice device) {
             if(!mLeDevices.contains(device) && device != null && device.getName() != null){
-                if(device.getName().equals("ESP32"))
+                if(device.getName().equals(TaggerName))
                     mLeDevices.add(device);
             }
         }

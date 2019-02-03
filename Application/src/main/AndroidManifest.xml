@@ -25,11 +25,11 @@
         android:label="@string/app_name"
         android:theme="@android:style/Theme.Holo.Light">
         <activity
-            android:name=".InGameActivity"
+            android:name="de.openlt.andriod.main.InGameActivity"
             android:label="@string/app_name">
         </activity>
         <activity
-            android:name=".StartActivity"
+            android:name="de.openlt.andriod.main.StartActivity"
             android:label="@string/title_activity_start">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

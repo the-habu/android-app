@@ -37,4 +37,9 @@
     <string name="title_activity_fullscreen">FullscreenActivity</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="playerState">Status</string>
+    <string name="latenzLabel">Letzte Latenz</string>
+    <string name="activeLabel">Active</string>
+    <string name="DeactiveLabel">Deactivated</string>
+    <string name="TaggerStatusLabel">TaggerState</string>
 </resources>

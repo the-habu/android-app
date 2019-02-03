@@ -105,6 +105,12 @@ public class BluetoothLeService extends Service {
                 mConnectionState = STATE_DISCONNECTED;
                 Log.i(TAG, "Disconnected from GATT server.");
                 broadcastUpdate(intentAction);
+                // Issue 183108: https://code.google.com/p/android/issues/detail?id=183108
+                try {
+                    gatt.close();
+                } catch (Exception e) {
+                    Log.d(TAG, "close ignoring: " + e);
+                }
             }
         }
 
@@ -130,7 +136,7 @@ public class BluetoothLeService extends Service {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
-            Log.d(TAG, "onCharacteristicChanged");
+            Log.d(TAG, "onCharacteristicChanged " + characteristic.getUuid());
             broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
         }
 
@@ -177,7 +183,7 @@ public class BluetoothLeService extends Service {
     }
 
     public class LocalBinder extends Binder {
-        BluetoothLeService getService() {
+        public BluetoothLeService getService() {
             return BluetoothLeService.this;
         }
     }

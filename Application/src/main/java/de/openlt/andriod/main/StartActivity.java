@@ -1,4 +1,4 @@
-package com.example.android.bluetoothlegatt;
+package de.openlt.andriod.main;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -9,7 +9,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
-import static android.provider.AlarmClock.EXTRA_MESSAGE;
+import com.example.android.bluetoothlegatt.DeviceScanActivity;
+import com.example.android.bluetoothlegatt.R;
 
 public class StartActivity extends Activity {
 
