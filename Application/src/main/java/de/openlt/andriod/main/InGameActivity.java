@@ -32,12 +32,15 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import de.openlt.andriod.Audio.SoundPoolPlayer;
+import de.openlt.andriod.WebSocket.WebSocketService;
 
 public class InGameActivity extends Activity {
     private final static String TAG = InGameActivity.class.getSimpleName();
 
 
     BluetoothLeService mBluetoothLeService;
+    WebSocketService webSocketService;
+
     public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
     public static final float DeathTime = 5000;
 
@@ -72,20 +75,35 @@ public class InGameActivity extends Activity {
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
 
-        Intent socketIntent = new Intent();
-        ServiceConnection socketServiceConnection = new ServiceConnection() {
-            @Override
-            public void onServiceConnected(ComponentName name, IBinder service) {
-
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-
-            }
-        };
-        bindService(socketIntent, socketServiceConnection, BIND_AUTO_CREATE);
+        Intent webSockertIntent = new Intent(this, WebSocketService.class);
+        startService(webSockertIntent);
+        bindService(webSockertIntent, WebSockertServiceConnection, BIND_AUTO_CREATE);
     }
+
+
+    private final ServiceConnection WebSockertServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            webSocketService = ((WebSocketService.LocalBinder) service).getService();
+            Log.i(TAG,"WebSocket onServiceConnected");
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Log.i(TAG,"WebSocket onServiceDisconnected");
+            webSocketService = null;
+        }
+
+        @Override
+        public void onBindingDied(ComponentName name) {
+            Log.i(TAG,"WebSocket onBindingDied");
+        }
+
+        @Override
+        public void onNullBinding(ComponentName name) {
+            Log.i(TAG,"WebSocket onNullBinding");
+        }
+    };
 
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
@@ -276,7 +294,9 @@ public class InGameActivity extends Activity {
         super.onDestroy();
         Log.d(TAG, "onDestroy");
         unbindService(mServiceConnection);
+        unbindService(WebSockertServiceConnection);
         mBluetoothLeService = null;
+        webSocketService = null;
         soundPlayer.release();
     }
     private static IntentFilter makeGattUpdateIntentFilter() {
