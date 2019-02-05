@@ -35,6 +35,8 @@ import android.util.Log;
 import java.util.List;
 import java.util.UUID;
 
+import de.openlt.andriod.main.InGameActivity;
+
 /**
  * Service for managing connection and data communication with a GATT server hosted on a
  * given Bluetooth LE device.
@@ -138,6 +140,16 @@ public class BluetoothLeService extends Service {
                                             BluetoothGattCharacteristic characteristic) {
             Log.d(TAG, "onCharacteristicChanged " + characteristic.getUuid());
             broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
+        }
+
+        @Override
+        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status){
+            Log.i(TAG, "onDescriptorWrite: ");
+            if(!InGameActivity.characteristicsLeftToActivate.isEmpty())
+            {
+                setCharacteristicNotification(InGameActivity.characteristicsLeftToActivate.get(0), true);
+                InGameActivity.characteristicsLeftToActivate.remove(0);
+            }
         }
 
 
@@ -337,6 +349,7 @@ public class BluetoothLeService extends Service {
 
         BluetoothGattDescriptor descriptor = characteristic.getDescriptor(UUID.fromString(SampleGattAttributes.CLIENT_DECRIPTOR_CONFIG));
         descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+        //Log.i(TAG, characteristic.getUuid() + " has desc Permission "+ descriptor.getPermissions() );
         mBluetoothGatt.writeDescriptor(descriptor);
 
     }

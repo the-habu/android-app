@@ -27,6 +27,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -56,6 +57,8 @@ public class InGameActivity extends Activity {
     BluetoothGattCharacteristic irRead;
     BluetoothGattCharacteristic irWrite;
 
+    static public List<BluetoothGattCharacteristic> characteristicsLeftToActivate;
+
     final String csvDir = (Environment.getExternalStorageDirectory().getAbsolutePath() + "/Android/data/com.laserTag.de/Logging"); // Here csv file name is MyCsvFile.csv
     final String csvFileName = "latencyLog.csv";
 
@@ -65,6 +68,8 @@ public class InGameActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_in_game);
         soundPlayer = new SoundPoolPlayer(this);
+        characteristicsLeftToActivate = new LinkedList<BluetoothGattCharacteristic>();
+
         mConnectionState = (TextView) findViewById(R.id.InGame_Connected_Val);
         mPlayerState = (TextView) findViewById(R.id.InGame_Active_Val);
         mTimeActivationLeft = (TextView) findViewById(R.id.TimeActivationLeft);
@@ -72,12 +77,25 @@ public class InGameActivity extends Activity {
 
         final Intent intent = getIntent();
         mDeviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
+
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
 
         Intent webSockertIntent = new Intent(this, WebSocketService.class);
         startService(webSockertIntent);
         bindService(webSockertIntent, WebSockertServiceConnection, BIND_AUTO_CREATE);
+
+
+
+//        Thread t = new Thread(){
+//            public void run() {
+//                getApplicationContext().bindService(
+//                        new Intent(getApplicationContext(),
+//                                BluetoothLeService.class),
+//                        mServiceConnection, BIND_AUTO_CREATE);
+//            }
+//        };
+//        t.start();
     }
 
 
@@ -179,6 +197,7 @@ public class InGameActivity extends Activity {
                 break;
             case "REVCIEVE":
                 GotHit(stringExtra);
+                break;
             default:
                 Log.e(TAG, "unkown Command");
                 break;
@@ -225,6 +244,7 @@ public class InGameActivity extends Activity {
 
 
     private void InitCharactaristics(List<BluetoothGattService> supportedGattServices) {
+        boolean Writing = false;
         for (BluetoothGattService blGattService: supportedGattServices) {
             String uuid = blGattService.getUuid().toString();
             if(uuid.equals(SampleGattAttributes.TaggerService)){
@@ -234,7 +254,14 @@ public class InGameActivity extends Activity {
                         characteristic.getUuid().toString().equals(SampleGattAttributes.CHARACTERISTIC_LATENCY_UUID) ||
                         characteristic.getUuid().toString().equals(SampleGattAttributes.CHARACTERISTIC_IR_RECEIVE_UUID))
                     {
-                        mBluetoothLeService.setCharacteristicNotification(characteristic, true);
+
+                        if(Writing)
+                            characteristicsLeftToActivate.add(characteristic);
+                        else
+                        {
+                            Writing = true;
+                            mBluetoothLeService.setCharacteristicNotification(characteristic, true);
+                        }
                     }
 
                     if(characteristic.getUuid().toString().equals(SampleGattAttributes.CHARACTERISTIC_IR_SEND_UUID)) {
@@ -292,9 +319,11 @@ public class InGameActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
         Log.d(TAG, "onDestroy");
         unbindService(mServiceConnection);
         unbindService(WebSockertServiceConnection);
+
         mBluetoothLeService = null;
         webSocketService = null;
         soundPlayer.release();
