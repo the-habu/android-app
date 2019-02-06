@@ -169,6 +169,8 @@ public class BluetoothLeService extends Service {
         if(UUID_CHARACTERISTIC_TaggerTrigger.equals(characteristic.getUuid()))
         {
             intent.putExtra(COMMAND, "SHOOT");
+            int val = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0 );
+            intent.putExtra(EXTRA_DATA, String.valueOf(val));
             Log.i(TAG, "Trigger");
         }
         else if(UUID_CHARACTERISTIC_IR_RECEIVE_UUID.equals(characteristic.getUuid())) {

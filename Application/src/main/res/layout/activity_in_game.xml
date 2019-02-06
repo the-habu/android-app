@@ -51,19 +51,19 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="10dp"
+        android:layout_marginEnd="8dp"
         android:text="@string/TaggerStatusLabel"
-        app:layout_constraintEnd_toStartOf="@+id/InGame_Connected_Val"
+        app:layout_constraintEnd_toStartOf="@+id/RemoveTaggerBtn"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/InGame_Connected_Val"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="44dp"
         android:layout_marginEnd="16dp"
         android:text="@string/connected"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/RemoveTaggerBtn"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
@@ -76,5 +76,15 @@
         android:textSize="36sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/RemoveTaggerBtn"
+        android:layout_width="48dp"
+        android:layout_height="49dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:drawableLeft="@drawable/ic_compare_arrows_black_24dp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 </android.support.constraint.ConstraintLayout>
