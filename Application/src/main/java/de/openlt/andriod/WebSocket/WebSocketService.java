@@ -2,19 +2,17 @@ package de.openlt.andriod.WebSocket;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Binder;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.util.Log;
-
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
-import okio.ByteString;
 
 
 public class WebSocketService extends Service {
@@ -29,12 +27,12 @@ public class WebSocketService extends Service {
     private OkHttpClient client;
     private IBinder mBinder;
 
-
     @Override
     public void onCreate(){
         Log.i(TAG, "onCreate");
         client = new OkHttpClient();
-        Request request = new Request.Builder().url("ws://192.168.0.11").build();
+        //Request request = new Request.Builder().url("ws://192.168.0.11").build();
+        Request request = new Request.Builder().url("ws://192.168.1.106").build();
         EchoWebSocketListener listener = new EchoWebSocketListener();
         WebSocket ws = client.newWebSocket(request, listener);
     }
@@ -42,7 +40,6 @@ public class WebSocketService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "onStartCommand");
-
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -66,19 +63,19 @@ public class WebSocketService extends Service {
      * Handle action Foo in the provided background thread with the provided
      * parameters.
      */
-    private void handleActionFoo(String param1, String param2) {
+    //private void handleActionFoo(String param1, String param2) {
         // TODO: Handle action Foo
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
+    //    throw new UnsupportedOperationException("Not yet implemented");
+    //}
 
     /**
      * Handle action Baz in the provided background thread with the provided
      * parameters.
      */
-    private void handleActionBaz(String param1, String param2) {
+    //private void handleActionBaz(String param1, String param2) {
         // TODO: Handle action Baz
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
+    //    throw new UnsupportedOperationException("Not yet implemented");
+    //}
 
     public class LocalBinder extends Binder {
         public WebSocketService getService() {
@@ -91,36 +88,41 @@ public class WebSocketService extends Service {
 
         @Override
         public void onOpen(WebSocket webSocket, Response response) {
-            webSocket.send("New User");
-            //webSocket.send(ByteString.decodeHex("deadbeef"));
+            Log.i(TAG+"EchoWebSocketListener", "onOpen");
+            final SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+
+            webSocket.send(settings.getString("username","n/a"));
+            webSocket.send("What's up ?");
         }
 
         @Override
         public void onMessage(WebSocket webSocket, String text) {
+            Log.i(TAG+"EchoWebSocketListener", "onMessage");
             output("Receiving : " + text);
         }
 
-        /*
-        @Override
-        public void onMessage(WebSocket webSocket, ByteString bytes) {
-            output("Receiving bytes : " + bytes.hex());
-        }
-*/
-
         @Override
         public void onClosing(WebSocket webSocket, int code, String reason) {
-            webSocket.close(NORMAL_CLOSURE_STATUS, "Closing");
+            Log.i(TAG+"EchoWebSocketListener", "onClosing");
+            webSocket.close(NORMAL_CLOSURE_STATUS, "Goodbye !");
             output("Closing : " + code + " / " + reason);
         }
 
         @Override
         public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+            Log.i(TAG+"EchoWebSocketListener", "onFail");
             output("Error : " + t.getMessage());
         }
     }
 
+    public  void  input(final String  txt){
+
+    }
+
 
     private void output(final String txt) {
+        Log.i(TAG, "output: " + txt);
+
         Intent intent = new Intent(ACTION_NEW_MESAGE);
         intent.putExtra(PARAM_MESAGE, txt);
         sendBroadcast(intent);
