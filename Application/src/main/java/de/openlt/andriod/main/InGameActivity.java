@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
 import android.os.Bundle;
@@ -18,6 +19,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.example.android.bluetoothlegatt.BluetoothLeService;
@@ -199,6 +201,11 @@ public class InGameActivity extends Activity {
     }
 
 
+    byte[] GenerateShootData()
+    {
+        return BluetoothLeService.hexStringToByteArray(BluetoothLeService.SHOOTCOMMAND + "010201"); //TODO: PUT PLAYERID HERE
+    }
+
     private void TakeAction(Intent intent) {
         String stringExtra = intent.getStringExtra(BluetoothLeService.EXTRA_DATA);
         String command = intent.getStringExtra(BluetoothLeService.COMMAND);
@@ -207,7 +214,7 @@ public class InGameActivity extends Activity {
         switch (command) {
             case "SHOOT":
                 if(activePlayer && stringExtra.equals("1")) {
-                    irWrite.setValue(BluetoothLeService.SHOOTCOMMAND);
+                    irWrite.setValue(GenerateShootData());
                     mBluetoothLeService.writeCharacteristic(irWrite);
                     soundPlayer.playShortResource(R.raw.laser_gun_shot_2);
                 }
@@ -229,36 +236,51 @@ public class InGameActivity extends Activity {
         if(data.equals("241") || data.equals("191")){
             return;
         }
-        mPlayerState.setText(R.string.DeactiveLabel);
-        activePlayer = false;
-        soundPlayer.playShortResource(R.raw.shield_hit_1);
-        final Timer t  = new Timer();
-        final int timeStep = 100;
-        TimerTask task = new TimerTask() {
-            float timer = 0;
-            @Override
-            public void run() {
-                if(timer >= DeathTime)
-                {
-                    activePlayer = true;
-                    SetTimerToUI("");
-                    t.cancel();
-                }else {
-                    timer += timeStep;
-                    SetTimerToUI("" + (DeathTime - timer) / 1000f);
-                }
-            }
+        if(activePlayer) {
+            mPlayerState.setText(R.string.DeactiveLabel);
+            activePlayer = false;
+            soundPlayer.playShortResource(R.raw.shield_hit_1);
+            final Timer t = new Timer();
+            final int timeStep = 100;
+            final ProgressBar bar = findViewById(R.id.progressBar);
+            bar.setVisibility(View.VISIBLE);
 
-            void SetTimerToUI(final String time){
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mTimeActivationLeft.setText(time);
+            TimerTask task = new TimerTask() {
+                float timer = 0;
+                @Override
+                public void run() {
+                    if (timer >= DeathTime) {
+                        activePlayer = true;
+                        SetTimerToUI("");
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                mPlayerState.setText(R.string.activeLabel);
+                                bar.setProgress(0);
+                                bar.setVisibility(View.INVISIBLE);
+                            }});
+                        t.cancel();
+                    } else {
+                        timer += timeStep;
+                        SetTimerToUI("" + (DeathTime - timer) / 1000f);
                     }
-                });
-            }
-        };
-        t.scheduleAtFixedRate(task,0,timeStep);
+                }
+
+                void SetTimerToUI(final String time) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            int val = (int) ((timer/ DeathTime) * 100);
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                bar.setProgress(val, false);
+                            }
+                            mTimeActivationLeft.setText(time);
+                        }
+                    });
+                }
+            };
+            t.scheduleAtFixedRate(task, 0, timeStep);
+        }
     }
 
 

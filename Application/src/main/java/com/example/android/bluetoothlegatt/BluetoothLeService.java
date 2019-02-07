@@ -68,7 +68,7 @@ public class BluetoothLeService extends Service {
     public final static String COMMAND =
             "com.example.bluetooth.le.COMMAND";
 
-    public final static byte[] SHOOTCOMMAND = hexStringToByteArray("A1F1020102");
+    public final static String SHOOTCOMMAND = "A1F1";
 
     public final static UUID UUID_CHARACTERISTIC_TaggerTrigger =    UUID.fromString(SampleGattAttributes.CHARACTERISTIC_TRIGGER_UUID);
     public final static UUID UUID_CHARACTERISTIC_IR_RECEIVE_UUID =  UUID.fromString(SampleGattAttributes.CHARACTERISTIC_IR_RECEIVE_UUID);

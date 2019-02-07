@@ -62,7 +62,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="44dp"
         android:layout_marginEnd="16dp"
-        android:text="@string/connected"
+        android:text="Connecting"
         app:layout_constraintEnd_toStartOf="@+id/RemoveTaggerBtn"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -71,10 +71,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="176dp"
-        android:layout_marginTop="153dp"
+        android:layout_marginTop="136dp"
         android:layout_marginEnd="176dp"
-        android:textSize="36sp"
+        android:textSize="70sp"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.491"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -84,7 +85,49 @@
         android:layout_height="49dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
-        android:drawableLeft="@drawable/ic_compare_arrows_black_24dp"
+        android:drawableStart="@drawable/ic_compare_arrows_black_24dp"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TableLayout
+        android:id="@+id/ScoreTable"
+        android:layout_width="407dp"
+        android:layout_height="254dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="32dp"
+        app:layout_constraintBottom_toTopOf="@+id/InGame_Latenz"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.718">
+
+        <TableRow
+            android:id="@+id/ScoreRow"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </TableLayout>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:progressBarStyleHorizontal"
+        android:layout_width="229dp"
+        android:layout_height="193dp"
+        android:layout_marginStart="181dp"
+        android:layout_marginTop="84dp"
+        android:layout_marginEnd="182dp"
+        android:indeterminate="false"
+        android:progress="0"
+        android:progressDrawable="@drawable/circle"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 </android.support.constraint.ConstraintLayout>
