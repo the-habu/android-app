@@ -208,6 +208,8 @@ public class InGameActivity extends Activity {
         if(data.equals("241")){
             return;
         }
+        webSocketService.send("got hit by XXX");
+
         mPlayerState.setText(R.string.DeactiveLabel);
         activePlayer = false;
         soundPlayer.playShortResource(R.raw.shield_hit_1);

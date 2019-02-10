@@ -5,14 +5,19 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.IBinder;
+import android.os.Message;
 import android.preference.PreferenceManager;
 import android.util.Log;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
+import okio.ByteString;
 
 
 public class WebSocketService extends Service {
@@ -21,11 +26,16 @@ public class WebSocketService extends Service {
     // TODO: Rename actions, choose action names that describe tasks that this
     // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
     private static final String ACTION_NEW_MESAGE = "com.example.myfirstapp.action.ACTION_NEW_MESAGE ";
-    private static final String PARAM_MESAGE = "com.example.myfirstapp.param.ACTION_NEW_MESAGE ";
+    private static final String PARAM_MESAGE = "com.example.myfirstapp.param.ACTION_NEW_MESAGE";
+    private static final String PARAM_USERID = "com.example.myfirstapp.action.ACTION_NEW_USERID";
+    private static final String ACTION_NEW_USERID = "com.example.myfirstapp.action.ACTION_NEW_USERID";
 
 
     private OkHttpClient client;
+    private WebSocket webSocket;
     private IBinder mBinder;
+    private String userName;
+
 
     @Override
     public void onCreate(){
@@ -34,7 +44,10 @@ public class WebSocketService extends Service {
         //Request request = new Request.Builder().url("ws://192.168.0.11").build();
         Request request = new Request.Builder().url("ws://192.168.1.106").build();
         EchoWebSocketListener listener = new EchoWebSocketListener();
-        WebSocket ws = client.newWebSocket(request, listener);
+        webSocket = client.newWebSocket(request, listener);
+
+        final SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        userName = settings.getString("username","n/a");
     }
 
     @Override
@@ -89,10 +102,9 @@ public class WebSocketService extends Service {
         @Override
         public void onOpen(WebSocket webSocket, Response response) {
             Log.i(TAG+"EchoWebSocketListener", "onOpen");
-            final SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
-            webSocket.send(settings.getString("username","n/a"));
-            webSocket.send("What's up ?");
+            webSocket.send(userName);
+            webSocket.send("Hello");
         }
 
         @Override
@@ -105,27 +117,42 @@ public class WebSocketService extends Service {
         public void onClosing(WebSocket webSocket, int code, String reason) {
             Log.i(TAG+"EchoWebSocketListener", "onClosing");
             webSocket.close(NORMAL_CLOSURE_STATUS, "Goodbye !");
-            output("Closing : " + code + " / " + reason);
+            //output("Closing : " + code + " / " + reason);
         }
 
         @Override
         public void onFailure(WebSocket webSocket, Throwable t, Response response) {
-            Log.i(TAG+"EchoWebSocketListener", "onFail");
-            output("Error : " + t.getMessage());
+            Log.w(TAG+"EchoWebSocketListener", "onFail");
+            //output("Error : " + t.getMessage());
         }
     }
 
-    public  void  input(final String  txt){
-
+    public  void  send(final String  txt){
+        Log.i(TAG, "sending: " + txt);
+        webSocket.send(txt);
     }
 
 
     private void output(final String txt) {
         Log.i(TAG, "output: " + txt);
 
+        JSONObject message = null;
+        String userId = null;
+        try {
+            message = new JSONObject(txt);
+        } catch (JSONException e) {
+            Log.e(TAG,"Unparsable JSON " + txt);
+        }
+        message.has()
+
+        Intent intent2 = new Intent(ACTION_NEW_USERID);
+        intent2.putExtra(PARAM_USERID, userId);
+
         Intent intent = new Intent(ACTION_NEW_MESAGE);
         intent.putExtra(PARAM_MESAGE, txt);
         sendBroadcast(intent);
     }
+
+    //private Message
 
 }
