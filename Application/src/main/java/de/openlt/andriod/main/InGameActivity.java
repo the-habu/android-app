@@ -1,6 +1,7 @@
 package de.openlt.andriod.main;
 
 import android.app.Activity;
+import android.app.Application;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.content.BroadcastReceiver;
@@ -9,13 +10,20 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.example.android.bluetoothlegatt.BluetoothLeService;
+import com.example.android.bluetoothlegatt.DeviceScanActivity;
 import com.example.android.bluetoothlegatt.R;
 import com.example.android.bluetoothlegatt.SampleGattAttributes;
 import com.opencsv.CSVWriter;
@@ -43,6 +51,7 @@ public class InGameActivity extends Activity {
     WebSocketService webSocketService;
 
     public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
+    public static final String MACADDRESSFIELDNAME= "TAGGERMAC";
     public static final float DeathTime = 5000;
 
     private String mDeviceAddress;
@@ -51,6 +60,7 @@ public class InGameActivity extends Activity {
     private TextView mPlayerState;
     private TextView mTimeActivationLeft;
     private SoundPoolPlayer soundPlayer;
+    private int connectionCounter;
 
     BluetoothGattCharacteristic latency;
     BluetoothGattCharacteristic trigger;
@@ -78,6 +88,11 @@ public class InGameActivity extends Activity {
         final Intent intent = getIntent();
         mDeviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
 
+        final SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+        final SharedPreferences.Editor editor = settings.edit();
+        editor.putString(MACADDRESSFIELDNAME, mDeviceAddress);
+        editor.apply();
+
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
 
@@ -85,8 +100,16 @@ public class InGameActivity extends Activity {
         startService(webSockertIntent);
         bindService(webSockertIntent, WebSockertServiceConnection, BIND_AUTO_CREATE);
 
-
-
+        Button removeTaggerBtn =  (Button) findViewById(R.id.RemoveTaggerBtn);
+        removeTaggerBtn.setOnClickListener(new View.OnClickListener() {
+                                               public void onClick(View v) {
+                                                   editor.remove(MACADDRESSFIELDNAME);
+                                                   editor.apply();
+                                                   mBluetoothLeService.disconnect();
+                                                   Intent intent = new Intent(InGameActivity.this, DeviceScanActivity.class);
+                                                   startActivity(intent);
+                                               }
+                                           });
 //        Thread t = new Thread(){
 //            public void run() {
 //                getApplicationContext().bindService(
@@ -158,7 +181,7 @@ public class InGameActivity extends Activity {
                 Log.d(TAG, "ACTION_GATT_DISCONNECTED");
                 updateConnectionState(R.string.disconnected);
                 invalidateOptionsMenu();
-                //clearUI();
+                mBluetoothLeService.connect(mDeviceAddress);
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 Log.d(TAG, "ACTION_GATT_SERVICES_DISCOVERED");
                 InitCharactaristics(mBluetoothLeService.getSupportedGattServices());
@@ -178,6 +201,11 @@ public class InGameActivity extends Activity {
     }
 
 
+    byte[] GenerateShootData()
+    {
+        return BluetoothLeService.hexStringToByteArray(BluetoothLeService.SHOOTCOMMAND + "010201"); //TODO: PUT PLAYERID HERE
+    }
+
     private void TakeAction(Intent intent) {
         String stringExtra = intent.getStringExtra(BluetoothLeService.EXTRA_DATA);
         String command = intent.getStringExtra(BluetoothLeService.COMMAND);
@@ -185,8 +213,8 @@ public class InGameActivity extends Activity {
 
         switch (command) {
             case "SHOOT":
-                if(activePlayer) {
-                    irWrite.setValue(BluetoothLeService.SHOOTCOMMAND);
+                if(activePlayer && stringExtra.equals("1")) {
+                    irWrite.setValue(GenerateShootData());
                     mBluetoothLeService.writeCharacteristic(irWrite);
                     soundPlayer.playShortResource(R.raw.laser_gun_shot_2);
                 }
@@ -205,41 +233,55 @@ public class InGameActivity extends Activity {
     }
 
     void GotHit(String data){
-        if(data.equals("241")){
+        if(data.equals("241") || data.equals("191")){
             return;
         }
         webSocketService.send("got hit by XXX");
+        if(activePlayer) {
+            mPlayerState.setText(R.string.DeactiveLabel);
+            activePlayer = false;
+            soundPlayer.playShortResource(R.raw.shield_hit_1);
+            final Timer t = new Timer();
+            final int timeStep = 100;
+            final ProgressBar bar = findViewById(R.id.progressBar);
+            bar.setVisibility(View.VISIBLE);
 
-        mPlayerState.setText(R.string.DeactiveLabel);
-        activePlayer = false;
-        soundPlayer.playShortResource(R.raw.shield_hit_1);
-        final Timer t  = new Timer();
-        final int timeStep = 100;
-        TimerTask task = new TimerTask() {
-            float timer = 0;
-            @Override
-            public void run() {
-                if(timer >= DeathTime)
-                {
-                    activePlayer = true;
-                    SetTimerToUI("");
-                    t.cancel();
-                }else {
-                    timer += timeStep;
-                    SetTimerToUI("" + (DeathTime - timer) / 1000f);
-                }
-            }
-
-            void SetTimerToUI(final String time){
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mTimeActivationLeft.setText(time);
+            TimerTask task = new TimerTask() {
+                float timer = 0;
+                @Override
+                public void run() {
+                    if (timer >= DeathTime) {
+                        activePlayer = true;
+                        SetTimerToUI("");
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                mPlayerState.setText(R.string.activeLabel);
+                                bar.setProgress(0);
+                                bar.setVisibility(View.INVISIBLE);
+                            }});
+                        t.cancel();
+                    } else {
+                        timer += timeStep;
+                        SetTimerToUI("" + (DeathTime - timer) / 1000f);
                     }
-                });
-            }
-        };
-        t.scheduleAtFixedRate(task,0,timeStep);
+                }
+
+                void SetTimerToUI(final String time) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            int val = (int) ((timer/ DeathTime) * 100);
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                bar.setProgress(val, false);
+                            }
+                            mTimeActivationLeft.setText(time);
+                        }
+                    });
+                }
+            };
+            t.scheduleAtFixedRate(task, 0, timeStep);
+        }
     }
 
 

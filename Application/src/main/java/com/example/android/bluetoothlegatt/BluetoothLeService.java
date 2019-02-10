@@ -68,7 +68,7 @@ public class BluetoothLeService extends Service {
     public final static String COMMAND =
             "com.example.bluetooth.le.COMMAND";
 
-    public final static byte[] SHOOTCOMMAND = hexStringToByteArray("A1F1020102");
+    public final static String SHOOTCOMMAND = "A1F1";
 
     public final static UUID UUID_CHARACTERISTIC_TaggerTrigger =    UUID.fromString(SampleGattAttributes.CHARACTERISTIC_TRIGGER_UUID);
     public final static UUID UUID_CHARACTERISTIC_IR_RECEIVE_UUID =  UUID.fromString(SampleGattAttributes.CHARACTERISTIC_IR_RECEIVE_UUID);
@@ -169,6 +169,8 @@ public class BluetoothLeService extends Service {
         if(UUID_CHARACTERISTIC_TaggerTrigger.equals(characteristic.getUuid()))
         {
             intent.putExtra(COMMAND, "SHOOT");
+            int val = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0 );
+            intent.putExtra(EXTRA_DATA, String.valueOf(val));
             Log.i(TAG, "Trigger");
         }
         else if(UUID_CHARACTERISTIC_IR_RECEIVE_UUID.equals(characteristic.getUuid())) {
