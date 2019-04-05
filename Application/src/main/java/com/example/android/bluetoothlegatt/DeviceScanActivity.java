@@ -46,7 +46,7 @@ import de.openlt.andriod.main.InGameActivity;
 public class DeviceScanActivity extends ListActivity {
     private final static String TAG = DeviceControlActivity.class.getSimpleName();
 
-    public final static String TaggerName = "OpenLT Tagger";
+    public final static String TaggerName = "Open Laser Tag Tagger";
 
     private LeDeviceListAdapter mLeDeviceListAdapter;
     private BluetoothAdapter mBluetoothAdapter;
