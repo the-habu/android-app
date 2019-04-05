@@ -143,7 +143,7 @@ public class WebSocketService extends Service {
         } catch (JSONException e) {
             Log.e(TAG,"Unparsable JSON " + txt);
         }
-        message.has()
+        //message.has()
 
         Intent intent2 = new Intent(ACTION_NEW_USERID);
         intent2.putExtra(PARAM_USERID, userId);
