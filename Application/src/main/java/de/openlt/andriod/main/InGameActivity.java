@@ -236,7 +236,7 @@ public class InGameActivity extends Activity {
         if(data.equals("241") || data.equals("191")){
             return;
         }
-        webSocketService.send("got hit by XXX");
+        //webSocketService.send("got hit by XXX");
         if(activePlayer) {
             mPlayerState.setText(R.string.DeactiveLabel);
             activePlayer = false;
