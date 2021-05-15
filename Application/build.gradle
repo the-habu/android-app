@@ -77,3 +77,9 @@ allprojects {
         jcenter()
     }
 }
+
+configurations {
+    all {
+        exclude module: 'httpclient'
+    }
+}
